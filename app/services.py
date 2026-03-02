@@ -158,3 +158,13 @@ class TrailService:
             logger.error(f"Erreur lors de la suppression de la trace: {e}")
             raise
         return True
+
+    @staticmethod
+    def get_trail_points(trail: Trail, step=1):
+        _, points = GPXParser.parse_gpx(trail.gpx_content)
+        liste_lonlat = [[pts.longitude, pts.latitude] for pts in points]
+        if step > 1:
+            return liste_lonlat[::step]
+        else:
+            return liste_lonlat
+
