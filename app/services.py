@@ -25,7 +25,7 @@ class GPXParser:
         except Exception as e:
             raise ValueError(f"Erreur lors du parsing du GPX : {e}")
 
-        # Extraction des métadonnées
+        # Si le fichier ne contient aucune trace, on renvoie des zéros
         if not gpx.tracks:
             meta = {
                 "length": 0.0,
@@ -36,6 +36,8 @@ class GPXParser:
                 "start_location": None
             }
             points = []
+
+        # CALCULS de gpxpy
         else:
             moving_data = gpx.get_moving_data()
             uphill, downhill = gpx.get_uphill_downhill()
@@ -48,6 +50,7 @@ class GPXParser:
                 pt = first_track.segments[0].points[0]
                 start_loc = f"{pt.latitude}, {pt.longitude}"
 
+            # On range tous nos calculs dans un petit dictionnaire propre
             meta = {
                 "length": round(moving_data.moving_distance / 1000, 2) if moving_data else 0.0,
                 "elevation_gain": round(uphill, 2),
@@ -57,6 +60,7 @@ class GPXParser:
                 "start_location": start_loc
             }
 
+            # On extrait tous les points GPS (utile pour l'affichage de la carte)
             points = []
             for track in gpx.tracks:
                 for segment in track.segments:
@@ -67,10 +71,12 @@ class GPXParser:
 
 class TrailService:
     def __init__(self, db: Session):
+        # "Clé" de la session
         self.db = db
 
     def create_trail(self, trail_create: TrailSchema) -> Trail:
         """Crée une nouvelle trace avec ses points à partir des données fournies."""
+        # On transforme les données reçues en dictionnaire Python classique
         trail_dict = trail_create.model_dump(exclude_unset=True)
 
         if trail_create.gpx_content:
@@ -85,13 +91,14 @@ class TrailService:
             except Exception as e:
                 logger.warning(f"Échec du parsing GPX: {e}")
 
+        # On fabrique l'objet pour la base de données (le moule SQLAlchemy)
         new_trail = Trail(**trail_dict)
         self.db.add(new_trail)
         try:
-            self.db.commit()
-            self.db.refresh(new_trail)
+            self.db.commit() # On valide et on sauvegarde
+            self.db.refresh(new_trail) # On met à jour l'objet avec son nouvel ID
         except SQLAlchemyError as e:
-            self.db.rollback()
+            self.db.rollback() # En cas d'erreur (ex: nom en double), on annule
             logger.error(f"Erreur lors de la création de la trace: {e}")
             raise
         return new_trail
@@ -121,6 +128,7 @@ class TrailService:
         if not trail:
             return None
 
+        # On remplace les anciennes valeurs par les nouvelles
         for key, value in trail_data.model_dump(exclude_unset=True).items():
             if key != "gpx_content":
                 setattr(trail, key, value)
