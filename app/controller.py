@@ -7,6 +7,9 @@ from database import SessionLocal
 from models import TrailSchema
 from services import TrailService
 
+from fastapi.responses import HTMLResponse
+from folium_integration import map_traces
+
 router = APIRouter(tags=["Traces"])
 
 ERROR_TRAIL_NOT_FOUND = "Trace non trouvée"
@@ -52,6 +55,18 @@ def get_trace(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
     return trail
 
+@router.get(
+    "/traces/map", 
+    response_class=HTMLResponse, # on dit à FastAPI de renvoyer du HTML
+    summary="Afficher la carte de toutes les traces"
+)
+def get_traces_map(service: Annotated[TrailService, Depends(get_service)]):
+    # On récupère toutes les traces de la base de données
+    all_trails = service.get_all_trails()
+     # On génère le code HTML de la carte folium
+    html_map = map_traces(all_trails)
+    # On renvoie la page web
+    return HTMLResponse(content=html_map)
 
 @router.post(
     "/traces",
