@@ -62,7 +62,7 @@ def get_trace(
 )
 def get_traces_map(service: Annotated[TrailService, Depends(get_service)]):
     # On récupère toutes les traces de la base de données
-    all_trails = service.get_all_trails()
+    all_trails = service.get_trails_by_distance(min_dist, max_dist)
      # On génère le code HTML de la carte folium
     html_map = map_traces(all_trails)
     # On renvoie la page web
