@@ -6,7 +6,7 @@ from gpxpy.gpx import GPXTrackPoint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from models import Trail, TrailSchema
+from models import Trail, TrailSchema, TrailPoint
 
 logger = logging.getLogger(__name__)
 
@@ -72,20 +72,32 @@ class TrailService:
     def create_trail(self, trail_create: TrailSchema) -> Trail:
         """Crée une nouvelle trace avec ses points à partir des données fournies."""
         trail_dict = trail_create.model_dump(exclude_unset=True)
+        points_to_add = []
 
         if trail_create.gpx_content:
             try:
-                meta, _ = GPXParser.parse_gpx(trail_create.gpx_content)
+                meta, gpx_points = GPXParser.parse_gpx(trail_create.gpx_content)
 
-                # Compléter les données manquantes avec les métadonnées GPX
                 for key, value in meta.items():
                     if trail_dict.get(key) is None and value is not None:
                         trail_dict[key] = round(value, 2) if isinstance(value, float) else value
+
+                for idx, pt in enumerate(gpx_points):
+                    points_to_add.append(TrailPoint(
+                        latitude=pt.latitude,
+                        longitude=pt.longitude,
+                        altitude=pt.elevation,
+                        order=idx
+                    ))
 
             except Exception as e:
                 logger.warning(f"Échec du parsing GPX: {e}")
 
         new_trail = Trail(**trail_dict)
+
+        if points_to_add:
+            new_trail.points = points_to_add
+
         self.db.add(new_trail)
         try:
             self.db.commit()
@@ -95,6 +107,7 @@ class TrailService:
             logger.error(f"Erreur lors de la création de la trace: {e}")
             raise
         return new_trail
+
 
     def get_all_trails(self) -> list[type[Trail]]:
         """Récupère toutes les traces."""

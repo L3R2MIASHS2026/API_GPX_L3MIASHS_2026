@@ -2,9 +2,9 @@ import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -25,6 +25,24 @@ class Trail(Base):
     altitude_max = Column(Float, nullable=True)
     altitude_min = Column(Float, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+    points = relationship("TrailPoint", back_populates="trail", cascade="all, delete-orphan")
+
+class TrailPoint(Base):
+
+    __tablename__ = "trail_points"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trail_id = Column(Integer, ForeignKey("trails.id"))
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    altitude = Column(Float, nullable=True)
+    order = Column(Integer, nullable=False)
+
+    trail = relationship("Trail", back_populates="points")
+
+
+
 
 
 # --- Pydantic Models ---

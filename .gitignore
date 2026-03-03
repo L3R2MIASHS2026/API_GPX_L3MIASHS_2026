@@ -1,2 +1,37 @@
-*.db
+# =========================
+# Environnements Virtuels
+# =========================
+venv/
+.venv/
+env/
+.env
+
+# =========================
+# Fichiers Python compilés
+# =========================
 __pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Base de données
+# =========================
+# On ignore ta base SQLite locale pour ne pas la pousser sur Git
+*.db
+
+# =========================
+# Outils et Éditeurs (IDE)
+# =========================
+
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# =========================
+# Données spécifiques au projet
+# =========================
+
+
+# Décommente la ligne ci-dessous si tu ne veux pas versionner tes fichiers GPX locaux
+# data/*.gpx
