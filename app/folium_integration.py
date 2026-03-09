@@ -30,3 +30,17 @@ def map_traces(trails :list[type[Trail]]):
     return m._repr_html_()
 
 
+def map_traces_id(trail: Trail):
+    m = folium.Map()
+    all_points = get_trail_points(trail , 3)
+    folium.PolyLine(
+            all_points,
+            tooltip=trail.name,
+            color="blue",
+            weight=3,
+        ).add_to(m)
+    m.fit_bounds(all_points, padding=(30, 30))
+
+    return m._repr_html_()
+
+
