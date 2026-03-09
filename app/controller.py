@@ -38,7 +38,8 @@ def get_traces(
         min_dist: Annotated[float, Query(description="Distance min (km)")] = 0,
         max_dist: Annotated[float, Query(description="Distance max (km)")] = float('inf'),
 ):
-    return service.get_trails_by_distance(min_dist, max_dist)
+    trails_by_distance = service.get_trails_by_distance(min_dist, max_dist)
+    return HTMLResponse(content=map_traces(trails_by_distance))
 
 
 @router.get(
@@ -53,7 +54,8 @@ def get_trace(
 ):
     if not (trail := service.get_trail(trail_id)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
-    return trail
+    html_map = map_traces(trail)
+    return HTMLResponse(content=html_map)
 
 @router.get(
     "/traces/map", 
