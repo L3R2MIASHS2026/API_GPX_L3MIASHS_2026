@@ -1,19 +1,18 @@
 import datetime
-from typing import Optional
+from typing import Optional, List
 # Pydantic sert à valider les données qui entrent et sortent de l'API
 from pydantic import BaseModel, Field, field_validator
 # SQLAlchemy sert à construire les tables dans la base de données
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from database import Base
+from app.database import Base
 
 
 # --- SQLAlchemy Models ---
 
 class Trail(Base):
     __tablename__ = "trails"
-
     # Impossible d'avoir deux traces avec le même nom
     __table_args__ = (UniqueConstraint("name", name="uq_trail_name"),)
 
@@ -46,10 +45,20 @@ class TrailPoint(Base):
     trail = relationship("Trail", back_populates="points")
 
 
-
-
-
 # --- Pydantic Models ---
+
+class TrailPointSchema(BaseModel):
+    id: Optional[int] = Field(None)
+    trail_id: int
+    latitude: float
+    longitude: float
+    altitude: Optional[float] = Field(None)
+    order: int
+
+    model_config = {
+        "from_attributes": True,
+    }
+
 
 class TrailSchema(BaseModel):
     id: Optional[int] = Field(None, example=1)
@@ -64,8 +73,8 @@ class TrailSchema(BaseModel):
     altitude_min: Optional[float] = Field(None, example=1000.0, ge=0)
     created_at: Optional[datetime.datetime] = Field(None, example="2023-01-01T12:00:00Z")
 
-    # Cette configuration permet à Pydantic de lire directement
-    # les objets SQLAlchemy (notre classe Trail au-dessus)
+    points: List[TrailPointSchema] = []
+
     model_config = {
         "from_attributes": True,
     }
@@ -74,4 +83,4 @@ class TrailSchema(BaseModel):
     def check_positive_values(cls, value: Optional[float]) -> Optional[float]:
         if value is not None and value < 0:
             raise ValueError("La valeur doit être positive")
-        return value #Redondans, méthode de classe qui peut servir a autre chose. Ex : vérifier que l'altitude max est sup a l'altitude min
+        return value

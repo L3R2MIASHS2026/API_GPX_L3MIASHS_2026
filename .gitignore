@@ -17,7 +17,7 @@ __pycache__/
 # Base de données
 # =========================
 # On ignore ta base SQLite locale pour ne pas la pousser sur Git
-*.db
+
 
 # =========================
 # Outils et Éditeurs (IDE)

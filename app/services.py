@@ -6,7 +6,7 @@ from gpxpy.gpx import GPXTrackPoint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from models import Trail, TrailSchema, TrailPoint
+from app.models import Trail, TrailSchema, TrailPoint
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class GPXParser:
                 "start_location": start_loc
             }
 
-            # On extrait tous les points GPS (utile pour l'affichage de la carte)
+            # On extrait tous les points GPS
             points = []
             for track in gpx.tracks:
                 for segment in track.segments:
@@ -71,13 +71,14 @@ class GPXParser:
 
 class TrailService:
     def __init__(self, db: Session):
-        # "Clé" de la session
         self.db = db
 
     def create_trail(self, trail_create: TrailSchema) -> Trail:
         """Crée une nouvelle trace avec ses points à partir des données fournies."""
-        # On transforme les données reçues en dictionnaire Python classique
         trail_dict = trail_create.model_dump(exclude_unset=True)
+        # On retire les points vides du dictionnaire pour ne pas perturber SQLAlchemy
+        trail_dict.pop("points", None)
+
         points_to_add = []
 
         if trail_create.gpx_content:
@@ -99,7 +100,6 @@ class TrailService:
             except Exception as e:
                 logger.warning(f"Échec du parsing GPX: {e}")
 
-        # On fabrique l'objet pour la base de données (le moule SQLAlchemy)
         new_trail = Trail(**trail_dict)
 
         if points_to_add:
@@ -107,16 +107,15 @@ class TrailService:
 
         self.db.add(new_trail)
         try:
-            self.db.commit() # On valide et on sauvegarde
-            self.db.refresh(new_trail) # On met à jour l'objet avec son nouvel ID
+            self.db.commit()
+            self.db.refresh(new_trail)
         except SQLAlchemyError as e:
-            self.db.rollback() # En cas d'erreur (ex: nom en double), on annule
+            self.db.rollback()
             logger.error(f"Erreur lors de la création de la trace: {e}")
             raise
         return new_trail
 
-
-    def get_all_trails(self) -> list[type[Trail]]:
+    def get_all_trails(self) -> List[Trail]:
         """Récupère toutes les traces."""
         return self.db.query(Trail).all()
 
@@ -128,22 +127,21 @@ class TrailService:
         """Récupère une trace par son nom."""
         return self.db.query(Trail).filter(Trail.name == name).first()
 
-    def get_trails_by_distance(self, min_dist: float, max_dist: float) -> list[type[Trail]]:
+    def get_trails_by_distance(self, min_dist: float, max_dist: float) -> List[Trail]:
         """Récupère les traces dont la longueur est comprise entre min_dist et max_dist."""
         return self.db.query(Trail).filter(
             Trail.length >= min_dist,
             Trail.length <= max_dist
         ).all()
 
-    def update_trail(self, trail_id: int, trail_data: TrailSchema) -> type[Trail] | None:
+    def update_trail(self, trail_id: int, trail_data: TrailSchema) -> Optional[Trail]:
         """Met à jour une trace existante."""
         trail = self.db.query(Trail).filter(Trail.id == trail_id).first()
         if not trail:
             return None
 
-        # On remplace les anciennes valeurs par les nouvelles
         for key, value in trail_data.model_dump(exclude_unset=True).items():
-            if key != "gpx_content":
+            if key not in ["gpx_content", "points", "id"]:
                 setattr(trail, key, value)
 
         if trail_data.gpx_content:
@@ -174,10 +172,10 @@ class TrailService:
 
     @staticmethod
     def get_trail_points(trail: Trail, step=1):
+        """Récupère les points pour l'affichage Folium."""
         _, points = GPXParser.parse_gpx(trail.gpx_content)
-        liste_lonlat = [[pts.longitude, pts.latitude] for pts in points]
+        liste_lonlat = [[pts.latitude, pts.longitude] for pts in points]
         if step > 1:
             return liste_lonlat[::step]
         else:
             return liste_lonlat
-
