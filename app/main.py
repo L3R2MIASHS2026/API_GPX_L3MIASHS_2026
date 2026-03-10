@@ -96,7 +96,14 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
+@app.get("/", tags=["Accueil"])
+async def welcome():
+    return {
+        "message": "Bienvenue sur l'API Trails !",
+        "status": "Online",
+        "documentation": "/docs",
+        "carte_globale": "/traces/map/all"
+    }
 app.include_router(router)
 
 if __name__ == '__main__':
