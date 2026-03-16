@@ -170,7 +170,7 @@ class TrailService:
             raise
         return True
 
-    @staticmethod
+    
     def get_trail_points(trail: Trail, step=1):
         """Récupère les points pour l'affichage Folium."""
         _, points = GPXParser.parse_gpx(trail.gpx_content)

@@ -1,5 +1,7 @@
 import folium
-from app.models import Trail
+from models import Trail
+import requests as rq
+from services import GPXParser
 
 
 def generate_trail_map(trail: Trail) -> str:
@@ -52,3 +54,48 @@ def generate_trail_map(trail: Trail) -> str:
     # Cette méthode génère tout le JS et le CSS nécessaire
     return m._repr_html_()
 
+
+
+def get_trail_points(trail: Trail, step=1):
+    """Récupère les points pour l'affichage Folium."""
+    _, points = GPXParser.parse_gpx(trail.gpx_content)
+    liste_lonlat = [[pts.latitude, pts.longitude] for pts in points]
+    if step > 1:
+        return liste_lonlat[::step]
+    else:
+        return liste_lonlat
+
+
+def map_traces(min_dist:int = 0 ,max_dist:int = 150,):
+    m = folium.Map()
+    all_points = []
+    liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist={min_dist}&max_dist={max_dist}')
+    if liste_trail:
+        for trail in liste_trail:
+            liste_lonlat = get_trail_points(trail,3)
+
+            fg = folium.FeatureGroup(name=trail.name) ## afin que chaque trail soit une couche indépendantes
+
+            folium.PolyLine(
+                liste_lonlat,
+                tooltip=trail.name,
+                color="blue",
+                weight=3,
+            ).add_to(fg)
+
+            fg.add_to(m)
+            all_points.extend(liste_lonlat)
+
+            m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+
+            folium.LayerControl().add_to(m)
+
+    return m._repr_html_()
+
+
+
+
+
+
+map_traces()
+map_traces(3,15)
