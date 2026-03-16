@@ -2,6 +2,7 @@ import folium
 from models import Trail
 import requests as rq
 from services import GPXParser
+import HTMLResponse
 
 
 def generate_trail_map(trail: Trail) -> str:
@@ -52,12 +53,11 @@ def generate_trail_map(trail: Trail) -> str:
 
     # 7. Retourner le HTML de la carte
     # Cette méthode génère tout le JS et le CSS nécessaire
-    return m._repr_html_()
+    return HTMLResponse(content=m._repr_html_())
 
 
 
 def get_trail_points(trail: Trail, step=1):
-    """Récupère les points pour l'affichage Folium."""
     _, points = GPXParser.parse_gpx(trail.gpx_content)
     liste_lonlat = [[pts.latitude, pts.longitude] for pts in points]
     if step > 1:
@@ -86,11 +86,11 @@ def map_traces(min_dist:int = 0 ,max_dist:int = 150,):
             fg.add_to(m)
             all_points.extend(liste_lonlat)
 
-            m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+        m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
 
-            folium.LayerControl().add_to(m)
+        folium.LayerControl().add_to(m)
 
-    return m._repr_html_()
+    return HTMLResponse(content=m._repr_html_())
 
 
 

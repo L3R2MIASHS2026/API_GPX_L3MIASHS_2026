@@ -110,21 +110,3 @@ def delete_trace(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
 
 
-# --- Routes : CARTOGRAPHIE (HTML) ---
-
-@router.get(
-    "/traces/{trail_id}/carte",
-    response_class=HTMLResponse,
-    summary="Afficher la carte d'une trace",
-    tags=["Cartographie"]
-)
-def get_trail_map(
-        trail_id: int,
-        service: Annotated[TrailService, Depends(get_service)]
-):
-    trail = service.get_trail(trail_id)
-    if not trail:
-        raise HTTPException(status_code=404, detail=ERROR_TRAIL_NOT_FOUND)
-
-    map_html = generate_trail_map(trail)
-    return HTMLResponse(content=map_html)
