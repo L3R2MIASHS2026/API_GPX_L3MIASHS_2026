@@ -70,6 +70,19 @@ def get_traces(
 
 
 @router.get(
+    "/all_traces",
+    response_model=List[TrailSchema],
+    summary="Lister les traces",
+    tags=["Gestion des Traces"],
+    responses={200: {"description": "Liste des traces récupérée avec succès"}},
+)
+def get_traces(
+        service: Annotated[TrailService, Depends(get_service)],
+):
+    return service.get_all_trails()
+
+
+@router.get(
     "/traces/{trail_id}",
     response_model=TrailSchema,
     summary="Obtenir une trace",
