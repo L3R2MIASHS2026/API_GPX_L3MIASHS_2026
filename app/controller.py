@@ -5,10 +5,9 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 # --- Imports locaux ---
-from database import SessionLocal
-from models import TrailSchema
-from services import TrailService
-
+from app.database import SessionLocal
+from app.models import TrailSchema
+from app.services import TrailService
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
 router = APIRouter()
@@ -30,6 +29,29 @@ def get_service(db: Session = Depends(get_db)) -> TrailService:
     return TrailService(db)
 
 
+@router.get("/", tags=["Accueil"])
+async def api_root(service: Annotated[TrailService, Depends(get_service)]):
+    """
+    Point d'entrée principal de l'API.
+    Affiche la liste des chemins (routes) disponibles et le statut de la base.
+    """
+    toutes_les_traces = service.get_all_trails()
+    nombre_de_traces = len(toutes_les_traces)
+
+    return {
+        "api_name": "Trails API",
+        "author": "L3 MIASHS 2026",
+        "traces_en_base": nombre_de_traces,
+        "Routes": {
+            "documentation": "/docs",
+            "toutes_les_traces": "/traces",
+            "recherche_par_id": "/traces/{id}"
+        },
+        "description": "Utilisez /docs pour tester interactivement les points d'accès."
+    }
+
+
+
 # --- Routes : GESTION DES TRACES ---
 
 @router.get(
@@ -46,19 +68,6 @@ def get_traces(
 ):
     return service.get_trails_by_distance(min_dist, max_dist)
 
-
-@router.get(
-    "/all_traces",
-    response_model=List[TrailSchema],
-    summary="Lister les traces",
-    tags=["Gestion des Traces"],
-    responses={200: {"description": "Liste des traces récupérée avec succès"}},
-)
-def get_traces(
-        service: Annotated[TrailService, Depends(get_service)],
-
-):
-    return service.get_all_trails()
 
 @router.get(
     "/traces/{trail_id}",
@@ -122,22 +131,3 @@ def delete_trace(
     if not service.delete_trail(trail_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
 
-
-# --- Routes : CARTOGRAPHIE (HTML) ---
-
-@router.get(
-    "/traces/{trail_id}/carte",
-    response_class=HTMLResponse,
-    summary="Afficher la carte d'une trace",
-    tags=["Cartographie"]
-)
-def get_trail_map(
-        trail_id: int,
-        service: Annotated[TrailService, Depends(get_service)]
-):
-    trail = service.get_trail(trail_id)
-    if not trail:
-        raise HTTPException(status_code=404, detail=ERROR_TRAIL_NOT_FOUND)
-
-    map_html = generate_trail_map(trail)
-    return HTMLResponse(content=map_html)

@@ -96,23 +96,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-from fastapi.responses import HTMLResponse
 
-@app.get("/", response_class=HTMLResponse, tags=["Accueil"])
-async def welcome_html():
-    return """
-    <html>
-        <head><title>Trails API</title></head>
-        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-            <h1>🏃 Bienvenue sur l'API de Trails</h1>
-            <p>Le serveur est en ligne et prêt à l'emploi.</p>
-            <div style="margin-top: 20px;">
-                <a href="/docs" style="padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">Voir la Documentation</a>
-                <a href="/traces/map/all" style="padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">Voir la Carte Globale</a>
-            </div>
-        </body>
-    </html>
-    """
+
 app.include_router(router)
 
 if __name__ == '__main__':
