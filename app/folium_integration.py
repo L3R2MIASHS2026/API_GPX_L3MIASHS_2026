@@ -2,7 +2,10 @@ import folium
 from models import Trail
 import requests as rq
 from services import GPXParser
-import HTMLResponse
+from fastapi.responses import HTMLResponse
+import webbrowser
+import os
+
 
 
 def generate_trail_map(trail: Trail) -> str:
@@ -66,36 +69,100 @@ def get_trail_points(trail: Trail, step=1):
         return liste_lonlat
 
 
-def map_traces(min_dist:int = 0 ,max_dist:int = 150,):
-    m = folium.Map()
-    all_points = []
+
+def map_traces_by_distance(min_dist:int = 0 ,max_dist:int = 150):
     liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist={min_dist}&max_dist={max_dist}')
+    map_traces(liste_trail)
+
+
+def map_traces(liste_trail):
+    m = folium.Map(
+        control_scale=True)
+    all_points = []
+    
     if liste_trail:
         for trail in liste_trail:
             liste_lonlat = get_trail_points(trail,3)
-
-            fg = folium.FeatureGroup(name=trail.name) ## afin que chaque trail soit une couche indépendantes
 
             folium.PolyLine(
                 liste_lonlat,
                 tooltip=trail.name,
                 color="blue",
                 weight=3,
-            ).add_to(fg)
+            ).add_to(m)
 
-            fg.add_to(m)
             all_points.extend(liste_lonlat)
 
         m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
 
-        folium.LayerControl().add_to(m)
 
-    return HTMLResponse(content=m._repr_html_())
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
+
+def map_by_hardness(easy = True, medium = True, hard = True):
+    all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/all_traces')
+    easy_trails, medium_trails,hard_trails = sort_trail_by_hardness(all_trail)
+
+    m = folium.Map(
+        control_scale=True)
+    
+    all_points = []
+    
+
+    if easy:
+        all_points = lines_for_map(easy_trails, m ,all_points,"green")
+    if medium:
+        all_points  = lines_for_map(medium_trails, m ,all_points,"orange")
+    if hard:
+        all_points  = lines_for_map(hard_trails, m ,all_points,"red")
+
+    m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+
+
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
+
+     
+
+
+def lines_for_map(liste, carte,all_points, col="blue"):
+    if liste:
+        for trail in liste:
+            liste_lonlat = get_trail_points(trail,3)
+
+            folium.PolyLine(
+                liste_lonlat,
+                tooltip=trail.name,
+                color=col,
+                weight=3,
+            ).add_to(carte)
+
+            all_points.extend(liste_lonlat)
+    return all_points
+
+
+    
+
+def sort_trail_by_hardness(liste_trail):
+    easy_trails = []
+    medium_trails = []
+    hard_trails = []
+    for trail in liste_trail:
+        if (trail.elevation_gain >= 500 and trail.length >=5000) or trail.length>=25000:
+            hard_trails.append(trail)
+        elif (trail.elevation_gain >=200 and trail.length >=5000) or trail.length>=15000:
+            medium_trails.append(trail)
+        else:
+            easy_trails.append(trail)
+    return easy_trails, medium_trails,hard_trails
 
 
 
 
 
 
-map_traces()
-map_traces(3,15)
+
+map_traces_by_distance(3,15)
+

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from app.database import Base
+from database import Base
 
 
 # --- SQLAlchemy Models ---

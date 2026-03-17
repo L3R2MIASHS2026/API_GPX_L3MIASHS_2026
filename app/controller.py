@@ -5,10 +5,10 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 # --- Imports locaux ---
-from app.database import SessionLocal
-from app.models import TrailSchema
-from app.services import TrailService
-from app.folium_integration import generate_trail_map
+from database import SessionLocal
+from models import TrailSchema
+from services import TrailService
+
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
 router = APIRouter()
@@ -46,6 +46,19 @@ def get_traces(
 ):
     return service.get_trails_by_distance(min_dist, max_dist)
 
+
+@router.get(
+    "/all_traces",
+    response_model=List[TrailSchema],
+    summary="Lister les traces",
+    tags=["Gestion des Traces"],
+    responses={200: {"description": "Liste des traces récupérée avec succès"}},
+)
+def get_traces(
+        service: Annotated[TrailService, Depends(get_service)],
+
+):
+    return service.get_all_trails()
 
 @router.get(
     "/traces/{trail_id}",
@@ -110,3 +123,21 @@ def delete_trace(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
 
 
+# --- Routes : CARTOGRAPHIE (HTML) ---
+
+@router.get(
+    "/traces/{trail_id}/carte",
+    response_class=HTMLResponse,
+    summary="Afficher la carte d'une trace",
+    tags=["Cartographie"]
+)
+def get_trail_map(
+        trail_id: int,
+        service: Annotated[TrailService, Depends(get_service)]
+):
+    trail = service.get_trail(trail_id)
+    if not trail:
+        raise HTTPException(status_code=404, detail=ERROR_TRAIL_NOT_FOUND)
+
+    map_html = generate_trail_map(trail)
+    return HTMLResponse(content=map_html)
