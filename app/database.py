@@ -4,8 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 # URL de la base de données SQLite locale
 # Le fichier trails.db sera créé automatiquement à la racine de ton projet
-SQLALCHEMY_DATABASE_URL = "sqlite:///./trails.db"
-
+SQLALCHEMY_DATABASE_URL = "sqlite:///./app/trails.db"
 # Création du moteur SQLite
 # L'argument check_same_thread=False est spécifique à SQLite
 engine = create_engine(
