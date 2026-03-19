@@ -5,6 +5,7 @@ from services import GPXParser
 from fastapi.responses import HTMLResponse
 import webbrowser
 import os
+import math
 
 
 
@@ -159,10 +160,61 @@ def sort_trail_by_hardness(liste_trail):
     return easy_trails, medium_trails,hard_trails
 
 
+def traces_by_points_start(coordinates, rayon_km):
+    m =folium.Map(
+        location=coordinates,
+        zoom_start=14,
+        tiles="OpenStreetMap"  # Fond de carte standard
+    )
+
+    folium.Marker(
+        coordinates,
+        popup="Vous êtes ici",
+        icon=folium.Icon(color="green", icon="play")
+    ).add_to(m)
+
+    liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    for trail in liste_trail:
+        liste_coordinates = get_trail_points(trail)
+        distance = math.sqrt((liste_coordinates[0][0] - coordinates[0]) ** 2 + (liste_coordinates[0][1]  - coordinates[1]) ** 2)
+        if distance <= rayon_km:
+            folium.PolyLine(
+                liste_coordinates,
+                tooltip=trail.name,
+                weight=3,
+            ).add_to(m)
+
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
 
 
+def traces_by_points(coordinates, rayon_km):
+    m =folium.Map(
+        location=coordinates,
+        zoom_start=14,
+        tiles="OpenStreetMap"  # Fond de carte standard
+    )
 
+    folium.Marker(
+        coordinates,
+        popup="Vous êtes ici",
+        icon=folium.Icon(color="green", icon="play")
+    ).add_to(m)
 
+    liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    for trail in liste_trail:
+        liste_coordinates = get_trail_points(trail , 2)
+        for point in liste_coordinates:
+            distance = math.sqrt((point[0] - coordinates[0]) ** 2 + (point[1]  - coordinates[1]) ** 2)
+            if distance <= rayon_km:
+                folium.PolyLine(
+                    liste_coordinates,
+                    tooltip=trail.name,
+                    weight=3,
+                ).add_to(m)
+                break
 
-map_traces_by_distance(3,15)
+    m.save("map.html")
 
+    webbrowser.open("file://" + os.path.realpath("map.html"))  
