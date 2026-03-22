@@ -1,10 +1,12 @@
 import folium
 from models import Trail
 import requests as rq
-from services import GPXParser
-from fastapi.responses import HTMLResponse
+from services import GPXParser, TrailService
+from fastapi.responses import HTMLResponse 
 import webbrowser
 import os
+import math
+from geopy.distance import geodesic
 
 
 
@@ -101,7 +103,7 @@ def map_traces(liste_trail):
     webbrowser.open("file://" + os.path.realpath("map.html"))
 
 def map_by_hardness(easy = True, medium = True, hard = True):
-    all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/all_traces')
+    all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
     easy_trails, medium_trails,hard_trails = sort_trail_by_hardness(all_trail)
 
     m = folium.Map(
@@ -159,10 +161,131 @@ def sort_trail_by_hardness(liste_trail):
     return easy_trails, medium_trails,hard_trails
 
 
+def map_trail_by_point_and_startpoint_local(points, rayon_km, online = True ):
+    m = folium.Map(
+        control_scale=True)
+    all_points = []
+    if online:
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    else:
+        all_trail = TrailService.get_trails_by_distance(0, 150)
+
+    folium.Marker(
+        location=points,
+        
+    ).add_to(m)
+
+
+    if all_trail:
+        for trail in all_trail:
+            liste_lonlat = get_trail_points(trail)
+            if geodesic(points,liste_lonlat[0]).kilometers <= rayon_km:
+
+                folium.PolyLine(
+                    liste_lonlat,
+                    tooltip=trail.name,
+                    color="blue",
+                    weight=3,
+                ).add_to(m)
+
+                all_points.extend(liste_lonlat)
+
+        m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+
+
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
+
+
+
+def map_trail_by_point_and_one_point_local(points, rayon_km, online = True):
+    m = folium.Map(
+        control_scale=True)
+    all_points = []
+    if online:
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    else:
+        all_trail = TrailService.get_trails_by_distance(0, 150)
+
+    folium.Marker(
+        location=points,
+        
+    ).add_to(m)
+
+    
+    if all_trail:
+        for trail in all_trail:
+            liste_lonlat = get_trail_points(trail)
+            for pts in liste_lonlat:
+                if geodesic(points,pts).kilometers <= rayon_km:
+
+                    folium.PolyLine(
+                        liste_lonlat,
+                        tooltip=trail.name,
+                        color="blue",
+                        weight=3,
+                    ).add_to(m)
+
+                    all_points.extend(liste_lonlat)
+                    break
+
+        m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+
+
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
+    
+
+def map_trail_by_point_and_mean_point(points, rayon_km, online = True):
+    m = folium.Map(
+        control_scale=True)
+    all_points = []
+    if online:
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    else:
+        all_trail = TrailService.get_trails_by_distance(0, 150)
+
+    folium.Marker(
+        location=points,
+        
+    ).add_to(m)
+
+    
+    if all_trail:
+        for trail in all_trail:
+            liste_lonlat = get_trail_points(trail)
+            mean_coordinates = mean_point(liste_lonlat)    
+            if geodesic(points,mean_coordinates).kilometers <= rayon_km:
+
+                folium.PolyLine(
+                    liste_lonlat,
+                    tooltip=trail.name,
+                    color="blue",
+                    weight=3,
+                ).add_to(m)
+
+                all_points.extend(liste_lonlat)
+
+
+        m.fit_bounds(all_points, padding=(30, 30))  ##centrage du zoom
+
+
+    m.save("map.html")
+
+    webbrowser.open("file://" + os.path.realpath("map.html"))
+
+    def mean_point(liste_lonlat):
+        s1 = 0
+        s2 = 0
+        for point in liste_lonlat:
+            s1+=point[0]
+            s2+=point[1]
+        return [s1/len(liste_lonlat),s2/len(liste_lonlat)] 
+    
 
 
 
 
-
-map_traces_by_distance(3,15)
-
+map_trail_by_point_and_mean_point([48.8566, 2.3522],500, False)
