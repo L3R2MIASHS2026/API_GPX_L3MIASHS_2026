@@ -7,11 +7,11 @@ import uvicorn
 from fastapi import FastAPI
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.controller import router
-from app.database import engine, Base, SessionLocal
-from app.schemas import TrailSchema
-from app.models import Trail, TrailPoint
-from app.services import TrailService
+from app.routes import router
+from app.db_connection import engine, Base, SessionLocal
+from app.api_schemas import TrailSchema
+from app.db_models import Trail, TrailPoint
+from app.trail_service import TrailService
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
