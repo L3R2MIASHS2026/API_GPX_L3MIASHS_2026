@@ -6,7 +6,7 @@ from gpxpy.gpx import GPXTrackPoint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models import Trail, TrailSchema, TrailPoint
+from models import Trail, TrailSchema, TrailPoint
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +171,7 @@ class TrailService:
         return True
 
     
-    def get_trail_points(trail: Trail, step=1):
+    def get_trail_points(self,trail: Trail, step=1):
         """Récupère les points pour l'affichage Folium."""
         _, points = GPXParser.parse_gpx(trail.gpx_content)
         liste_lonlat = [[pts.latitude, pts.longitude] for pts in points]

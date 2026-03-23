@@ -2,11 +2,11 @@ import folium
 from models import Trail
 import requests as rq
 from services import GPXParser, TrailService
-from fastapi.responses import HTMLResponse 
+from fastapi.responses import HTMLResponse
+from geopy.distance import geodesic 
 import webbrowser
 import os
-import math
-from geopy.distance import geodesic
+
 
 
 
@@ -102,8 +102,13 @@ def map_traces(liste_trail):
 
     webbrowser.open("file://" + os.path.realpath("map.html"))
 
-def map_by_hardness(easy = True, medium = True, hard = True):
-    all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+def map_by_hardness(easy = True, medium = True, hard = True, online  = True):
+
+    if online:
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+    else:
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')    
+    
     easy_trails, medium_trails,hard_trails = sort_trail_by_hardness(all_trail)
 
     m = folium.Map(
@@ -168,7 +173,7 @@ def map_trail_by_point_and_startpoint_local(points, rayon_km, online = True ):
     if online:
         all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
     else:
-        all_trail = TrailService.get_trails_by_distance(0, 150)
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
 
     folium.Marker(
         location=points,
@@ -206,7 +211,7 @@ def map_trail_by_point_and_one_point_local(points, rayon_km, online = True):
     if online:
         all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
     else:
-        all_trail = TrailService.get_trails_by_distance(0, 150)
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
 
     folium.Marker(
         location=points,
@@ -245,7 +250,7 @@ def map_trail_by_point_and_mean_point(points, rayon_km, online = True):
     if online:
         all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
     else:
-        all_trail = TrailService.get_trails_by_distance(0, 150)
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
 
     folium.Marker(
         location=points,

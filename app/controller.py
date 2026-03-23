@@ -5,9 +5,9 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 # --- Imports locaux ---
-from app.database import SessionLocal
-from app.models import TrailSchema
-from app.services import TrailService
+from database import SessionLocal
+from models import TrailSchema
+from services import TrailService
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
 router = APIRouter()
