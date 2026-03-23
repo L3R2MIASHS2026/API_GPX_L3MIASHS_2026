@@ -9,7 +9,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.controller import router
 from app.database import engine, Base, SessionLocal
-from app.models import TrailSchema, Trail, TrailPoint
+from app.schemas import TrailSchema
+from app.models import Trail, TrailPoint
 from app.services import TrailService
 
 # Configuration du logging
