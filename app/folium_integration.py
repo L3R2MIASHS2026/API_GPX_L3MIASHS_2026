@@ -1,7 +1,6 @@
 import folium
-from models import Trail
 import requests as rq
-from services import GPXParser, TrailService
+from services import GPXParser
 from fastapi.responses import HTMLResponse
 from geopy.distance import geodesic 
 import webbrowser
