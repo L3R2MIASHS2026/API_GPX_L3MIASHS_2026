@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 # --- Imports locaux ---
 from app.database import SessionLocal
-from app.models import TrailSchema
+from app.schemas import TrailSchema
 from app.services import TrailService
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
