@@ -43,11 +43,10 @@ async def api_root(service: Annotated[TrailService, Depends(get_service)]):
         "author": "L3 MIASHS 2026",
         "traces_en_base": nombre_de_traces,
         "Routes": {
-            "documentation": "/docs",
             "toutes_les_traces": "/traces",
             "recherche_par_id": "/traces/{id}"
-        },
-        "description": "Utilisez /docs pour tester interactivement les points d'accès."
+        }
+
     }
 
 
