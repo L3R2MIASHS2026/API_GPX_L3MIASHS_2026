@@ -1,8 +1,10 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Security
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
+
+from fastapi.security import APIKeyHeader
 
 # --- Imports locaux ---
 from app.db_connection import SessionLocal
@@ -14,6 +16,21 @@ router = APIRouter()
 
 ERROR_TRAIL_NOT_FOUND = "Trace non trouvée"
 
+# --- CONFIGURATION DE LA SÉCURITÉ ---
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+# MOT DE PASSE SECRET
+SECRET_KEY = "miashs2026"
+
+def verifier_cle_api(cle_recue: str = Security(api_key_header)):
+    """Vérifie si la clé fournie correspond au mot de passe secret."""
+    if cle_recue != SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès refusé : Clé API invalide"
+        )
+    return cle_recue
+# ------------------------------------
 
 # --- Dépendances ---
 
@@ -67,18 +84,6 @@ def get_traces(
 ):
     return service.get_trails_by_distance(min_dist, max_dist)
 
-
-@router.get(
-    "/all_traces",
-    response_model=List[TrailSchema],
-    summary="Lister les traces",
-    tags=["Gestion des Traces"],
-    responses={200: {"description": "Liste des traces récupérée avec succès"}},
-)
-def get_traces(
-        service: Annotated[TrailService, Depends(get_service)],
-):
-    return service.get_all_trails()
 
 
 @router.get(
@@ -139,6 +144,7 @@ def update_trace(
 def delete_trace(
         trail_id: int,
         service: Annotated[TrailService, Depends(get_service)],
+        cle: Annotated[str, Depends(verifier_cle_api)]
 ):
     if not service.delete_trail(trail_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)

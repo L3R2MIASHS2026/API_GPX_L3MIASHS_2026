@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 class GPXParser:
     @staticmethod
     def parse_gpx(gpx_content: str) -> Tuple[Dict[str, Any], List[GPXTrackPoint]]:
-        """
-        Parse le contenu GPX et retourne les métadonnées et la liste des points.
-        """
+        """Parse le contenu GPX et retourne les métadonnées et la liste des points."""
         if not gpx_content.strip():
             raise ValueError("Le contenu GPX est vide.")
 
@@ -26,8 +24,8 @@ class GPXParser:
         except Exception as e:
             raise ValueError(f"Erreur lors du parsing du GPX : {e}")
 
-        # Si le fichier ne contient aucune trace, on renvoie des zéros
-        if not gpx.tracks:
+        # Si le fichier ne contient ni traces ni routes, on renvoie des zéros
+        if not gpx.tracks and not gpx.routes:
             meta = {
                 "length": 0.0,
                 "elevation_gain": 0.0,
@@ -36,36 +34,46 @@ class GPXParser:
                 "altitude_min": 0.0,
                 "start_location": None
             }
-            points = []
+            return meta, []
 
-        # CALCULS de gpxpy
-        else:
-            moving_data = gpx.get_moving_data()
-            uphill, downhill = gpx.get_uphill_downhill()
-            min_alt, max_alt = gpx.get_elevation_extremes()
 
-            # Récupération du premier point pour la localisation de départ
-            start_loc = None
-            first_track = gpx.tracks[0]
-            if first_track.segments and first_track.segments[0].points:
-                pt = first_track.segments[0].points[0]
-                start_loc = f"{pt.latitude}, {pt.longitude}"
+        distance_meters = gpx.length_3d() if gpx.has_elevations() else gpx.length_2d()
 
-            # On range tous nos calculs dans un petit dictionnaire propre
-            meta = {
-                "length": round(moving_data.moving_distance / 1000, 2) if moving_data else 0.0,
-                "elevation_gain": round(uphill, 2),
-                "elevation_loss": round(downhill, 2),
-                "altitude_max": round(max_alt, 2),
-                "altitude_min": round(min_alt, 2),
-                "start_location": start_loc
-            }
+        uphill, downhill = gpx.get_uphill_downhill()
+        min_alt, max_alt = gpx.get_elevation_extremes()
 
-            # On extrait tous les points GPS
-            points = []
-            for track in gpx.tracks:
-                for segment in track.segments:
-                    points.extend(segment.points)
+        # Récupération du premier point (Traces puis Routes)
+        start_lat = None
+        start_lon = None
+
+        if gpx.tracks and gpx.tracks[0].segments and gpx.tracks[0].segments[0].points:
+            pt = gpx.tracks[0].segments[0].points[0]
+            start_lat = pt.latitude
+            start_lon = pt.longitude
+        elif gpx.routes and gpx.routes[0].points:
+            pt = gpx.routes[0].points[0]
+            start_lat = pt.latitude
+            start_lon = pt.longitude
+
+        meta = {
+            "length": round(distance_meters / 1000, 2),
+            "elevation_gain": round(uphill, 2) if uphill else 0.0,
+            "elevation_loss": round(downhill, 2) if downhill else 0.0,
+            "altitude_max": round(max_alt, 2) if max_alt else 0.0,
+            "altitude_min": round(min_alt, 2) if min_alt else 0.0,
+            # On stocke les floats avec 5 décimales (précision d'environ 1 mètre)
+            "start_latitude": round(start_lat, 5) if start_lat is not None else None,
+            "start_longitude": round(start_lon, 5) if start_lon is not None else None
+        }
+
+        # On extrait tous les points GPS (Traces ET Routes)
+        points = []
+        for track in gpx.tracks:
+            for segment in track.segments:
+                points.extend(segment.points)
+
+        for route in gpx.routes:
+            points.extend(route.points)
 
         return meta, points
 
@@ -76,15 +84,20 @@ class TrailService:
 
     def create_trail(self, trail_create: TrailSchema) -> Trail:
         """Crée une nouvelle trace avec ses points à partir des données fournies."""
+        # On transforme le schéma en dictionnaire classique
         trail_dict = trail_create.model_dump(exclude_unset=True)
-        # On retire les points vides du dictionnaire pour ne pas perturber SQLAlchemy
+
         trail_dict.pop("points", None)
+        # On extrait gpx_content pour l'utiliser en calcul, puis on le retire du dict
+        gpx_content_temp = trail_dict.pop("gpx_content", None)
+        trail_dict.pop("description", None)  # On retire aussi la description par sécurité
 
         points_to_add = []
 
-        if trail_create.gpx_content:
+        if gpx_content_temp:
             try:
-                meta, gpx_points = GPXParser.parse_gpx(trail_create.gpx_content)
+                # On utilise gpx_content_temp pour faire les calculs
+                meta, gpx_points = GPXParser.parse_gpx(gpx_content_temp)
 
                 for key, value in meta.items():
                     if trail_dict.get(key) is None and value is not None:
@@ -94,13 +107,14 @@ class TrailService:
                     points_to_add.append(TrailPoint(
                         latitude=pt.latitude,
                         longitude=pt.longitude,
-                        altitude=pt.elevation,
+                        altitude=pt.elevation if hasattr(pt, 'elevation') else None,
                         order=idx
                     ))
 
             except Exception as e:
                 logger.warning(f"Échec du parsing GPX: {e}")
 
+        # Ici, trail_dict est "propre", il n'a plus de gpx_content
         new_trail = Trail(**trail_dict)
 
         if points_to_add:

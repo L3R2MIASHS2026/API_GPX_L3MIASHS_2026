@@ -1,4 +1,3 @@
-import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel, Field, field_validator
@@ -20,17 +19,17 @@ class TrailPointSchema(BaseModel):
 class TrailSchema(BaseModel):
     id: Optional[int] = Field(None, example=1)
     name: str = Field(..., example="Ma Trace de Randonnée")
-    description: Optional[str] = Field(None, example="Une belle randonnée en montagne")
+    # gpx_content reste ici pour la réception des données, mais le "service" l'empêchera d'aller en base
     gpx_content: Optional[str] = Field(None, example="<gpx>...</gpx>")
     length: Optional[float] = Field(None, example=10.5, ge=0)
     elevation_gain: Optional[float] = Field(None, example=500.0, ge=0)
     elevation_loss: Optional[float] = Field(None, example=500.0, ge=0)
-    start_location: Optional[str] = Field(None, example="45.0, 5.0")
+    start_latitude: Optional[float] = Field(None, example=45.12345)
+    start_longitude: Optional[float] = Field(None, example=5.12345)
     altitude_max: Optional[float] = Field(None, example=2000.0)
     altitude_min: Optional[float] = Field(None, example=1000.0)
-    created_at: Optional[datetime.datetime] = Field(None, example="2023-01-01T12:00:00Z")
 
-    points: List[TrailPointSchema] = []
+    #points: List[TrailPointSchema] = []
 
     model_config = {
         "from_attributes": True,

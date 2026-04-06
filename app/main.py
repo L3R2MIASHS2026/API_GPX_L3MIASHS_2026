@@ -26,29 +26,40 @@ Base.metadata.create_all(bind=engine)
 def load_initial_data() -> None:
     """
     Charge les fichiers GPX présents dans le dossier `data/` au démarrage de l'application.
-    Ignore les fichiers déjà présents en base de données.
+    Ignore l'importation si la base de données contient déjà des traces.
     """
+    db = SessionLocal()
+    service = TrailService(db)
+
+    traces_existantes = service.get_all_trails()
+    if traces_existantes:
+        logger.info("La base de données contient déjà des traces. Importation des GPX ignorée.")
+        db.close()
+        return
+
+
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(project_root, "data")
 
     if not os.path.exists(data_dir):
         logger.warning(f"Le dossier {data_dir} n'existe pas.")
+        db.close()
         return
 
     gpx_files = glob.glob(os.path.join(data_dir, "*.gpx"))
     if not gpx_files:
         logger.info("Aucun fichier GPX trouvé dans le dossier data.")
+        db.close()
         return
 
-    db = SessionLocal()
-    service = TrailService(db)
+    logger.info("Base de données vide : début de l'importation des fichiers GPX...")
 
     try:
         for file_path in gpx_files:
             file_name = os.path.basename(file_path)
             logger.info(f"Traitement du fichier : {file_name}")
 
-            # Vérification de l'existence du trail
+            # Vérification de l'existence du trail (au cas où)
             existing = service.get_trail_by_name(file_name)
             if existing:
                 logger.info(f"Le fichier {file_name} est déjà chargé.")
@@ -68,7 +79,6 @@ def load_initial_data() -> None:
             # Création du trail
             trail_create = TrailSchema(
                 name=file_name,
-                description=f"Importé automatiquement depuis {file_name}",
                 gpx_content=content
             )
 
@@ -88,6 +98,8 @@ def load_initial_data() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Gestionnaire de cycle de vie pour charger les données initiales au démarrage."""
+    # La fonction se lancera à chaque fois, mais s'arrêtera
+    # toute seule si la base est déjà pleine
     load_initial_data()
     yield
     logger.info("Arrêt de l'application.")
@@ -106,7 +118,7 @@ app = FastAPI(
 # Configuration du CORS pour autoriser GitHub Pages à interroger l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # L'étoile autorise tous les sites web à communiquer avec ton API
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
