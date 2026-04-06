@@ -61,9 +61,8 @@ def generate_trail_map(trail: Trail) -> str:
 
 
 
-def get_trail_points(trail: Trail, step=1):
-    _, points = GPXParser.parse_gpx(trail.gpx_content)
-    liste_lonlat = [[pts.latitude, pts.longitude] for pts in points]
+def get_trail_points(trail, step=1):
+    liste_lonlat = [[pts["latitude"], pts["longitude"]] for pts in trail["points"]]
     if step > 1:
         return liste_lonlat[::step]
     else:

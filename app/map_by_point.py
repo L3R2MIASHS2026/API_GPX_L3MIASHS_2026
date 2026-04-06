@@ -15,9 +15,9 @@ def map_trail_by_point_and_startpoint(points, rayon_km, online = True ):
         control_scale=True)
     all_points = []
     if online:
-        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150').json()
     else:
-        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150').json()
 
     folium.Marker(
         location=points,
@@ -52,9 +52,9 @@ def map_trail_by_point_and_mean_point(points, rayon_km, online = True):
         control_scale=True)
     all_points = []
     if online:
-        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150').json()
     else:
-        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150').json()
 
     folium.Marker(
         location=points,
@@ -93,9 +93,9 @@ def map_trail_by_point_and_one_point(points, rayon_km, online = True):
         control_scale=True)
     all_points = []
     if online:
-        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150').json()
     else:
-        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150').json()
 
     folium.Marker(
         location=points,
