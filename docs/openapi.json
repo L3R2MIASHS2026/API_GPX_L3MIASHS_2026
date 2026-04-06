@@ -1,1 +1,298 @@
-{"openapi":"3.1.0","info":{"title":"Trails API","description":"API de recherche de traces de trail à partir de fichiers GPX","version":"1.0.0"},"servers":[{"url":"https://api-gpx-l3miashs-2026.onrender.com","description":"Serveur Render (Production)"},{"url":"http://127.0.0.1:8000","description":"Serveur Local (Développement)"}],"paths":{"/":{"get":{"tags":["Accueil"],"summary":"Api Root","description":"Point d'entrée principal de l'API.\nAffiche la liste des chemins (routes) disponibles et le statut de la base.","operationId":"api_root__get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}},"/traces":{"get":{"tags":["Gestion des Traces"],"summary":"Lister les traces","operationId":"get_traces_traces_get","parameters":[{"name":"min_dist","in":"query","required":false,"schema":{"type":"number","description":"Distance min (km)","default":0,"title":"Min Dist"},"description":"Distance min (km)"},{"name":"max_dist","in":"query","required":false,"schema":{"type":"number","description":"Distance max (km)","title":"Max Dist"},"description":"Distance max (km)"}],"responses":{"200":{"description":"Liste des traces récupérée avec succès","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/TrailSchema"},"title":"Response Get Traces Traces Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"post":{"tags":["Gestion des Traces"],"summary":"Créer une trace","operationId":"create_trace_traces_post","requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrailSchema"}}}},"responses":{"201":{"description":"Trace créée avec succès","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrailSchema"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/all_traces":{"get":{"tags":["Gestion des Traces"],"summary":"Lister les traces","operationId":"get_traces_all_traces_get","responses":{"200":{"description":"Liste des traces récupérée avec succès","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/TrailSchema"},"type":"array","title":"Response Get Traces All Traces Get"}}}}}}},"/traces/{trail_id}":{"get":{"tags":["Gestion des Traces"],"summary":"Obtenir une trace","operationId":"get_trace_traces__trail_id__get","parameters":[{"name":"trail_id","in":"path","required":true,"schema":{"type":"integer","title":"Trail Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrailSchema"}}}},"404":{"description":"Trace non trouvée"},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"put":{"tags":["Gestion des Traces"],"summary":"Mettre à jour une trace","operationId":"update_trace_traces__trail_id__put","parameters":[{"name":"trail_id","in":"path","required":true,"schema":{"type":"integer","title":"Trail Id"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrailSchema"}}}},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrailSchema"}}}},"404":{"description":"Trace non trouvée"},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"delete":{"tags":["Gestion des Traces"],"summary":"Supprimer une trace","operationId":"delete_trace_traces__trail_id__delete","parameters":[{"name":"trail_id","in":"path","required":true,"schema":{"type":"integer","title":"Trail Id"}}],"responses":{"204":{"description":"Successful Response"},"404":{"description":"Trace non trouvée"},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}}},"components":{"schemas":{"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"TrailPointSchema":{"properties":{"id":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Id"},"trail_id":{"type":"integer","title":"Trail Id"},"latitude":{"type":"number","title":"Latitude"},"longitude":{"type":"number","title":"Longitude"},"altitude":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Altitude"},"order":{"type":"integer","title":"Order"}},"type":"object","required":["trail_id","latitude","longitude","order"],"title":"TrailPointSchema"},"TrailSchema":{"properties":{"id":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Id","example":1},"name":{"type":"string","title":"Name","example":"Ma Trace de Randonnée"},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description","example":"Une belle randonnée en montagne"},"gpx_content":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Gpx Content","example":"<gpx>...</gpx>"},"length":{"anyOf":[{"type":"number","minimum":0.0},{"type":"null"}],"title":"Length","example":10.5},"elevation_gain":{"anyOf":[{"type":"number","minimum":0.0},{"type":"null"}],"title":"Elevation Gain","example":500.0},"elevation_loss":{"anyOf":[{"type":"number","minimum":0.0},{"type":"null"}],"title":"Elevation Loss","example":500.0},"start_location":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Start Location","example":"45.0, 5.0"},"altitude_max":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Altitude Max","example":2000.0},"altitude_min":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Altitude Min","example":1000.0},"created_at":{"anyOf":[{"type":"string","format":"date-time"},{"type":"null"}],"title":"Created At","example":"2023-01-01T12:00:00Z"},"points":{"items":{"$ref":"#/components/schemas/TrailPointSchema"},"type":"array","title":"Points","default":[]}},"type":"object","required":["name"],"title":"TrailSchema"},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"},"input":{"title":"Input"},"ctx":{"type":"object","title":"Context"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}}}}
+
+openapi	"3.1.0"
+info
+title	"Trails API"
+description	"API de recherche de traces de trail à partir de fichiers GPX"
+version	"1.0.0"
+servers
+0
+url	"https://api-gpx-l3miashs-2026.onrender.com"
+description	"Serveur Render (Production)"
+1
+url	"http://127.0.0.1:8000"
+description	"Serveur Local (Développement)"
+paths
+/
+get
+tags
+0	"Accueil"
+summary	"Api Root"
+description	"Point d'entrée principal de l'API.\nAffiche la liste des chemins (routes) disponibles et le statut de la base."
+operationId	"api_root__get"
+responses
+200
+description	"Successful Response"
+content
+application/json
+schema	{}
+/traces
+get
+tags
+0	"Gestion des Traces"
+summary	"Lister les traces"
+operationId	"get_traces_traces_get"
+parameters
+0
+name	"min_dist"
+in	"query"
+required	false
+schema
+type	"number"
+description	"Distance min (km)"
+default	0
+title	"Min Dist"
+description	"Distance min (km)"
+1
+name	"max_dist"
+in	"query"
+required	false
+schema
+type	"number"
+description	"Distance max (km)"
+title	"Max Dist"
+description	"Distance max (km)"
+responses
+200
+description	"Liste des traces récupérée avec succès"
+content
+application/json
+schema	{ type: "array", title: "Response Get Traces Traces Get", items: {…} }
+422
+description	"Validation Error"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/HTTPValidationError" }
+post
+tags
+0	"Gestion des Traces"
+summary	"Créer une trace"
+operationId	"create_trace_traces_post"
+requestBody
+required	true
+content
+application/json
+schema
+$ref	"#/components/schemas/TrailSchema"
+responses
+201
+description	"Trace créée avec succès"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/TrailSchema" }
+422
+description	"Validation Error"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/HTTPValidationError" }
+/traces/{trail_id}
+get
+tags
+0	"Gestion des Traces"
+summary	"Obtenir une trace"
+operationId	"get_trace_traces__trail_id__get"
+parameters
+0
+name	"trail_id"
+in	"path"
+required	true
+schema
+type	"integer"
+title	"Trail Id"
+responses
+200
+description	"Successful Response"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/TrailSchema" }
+404
+description	"Trace non trouvée"
+422
+description	"Validation Error"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/HTTPValidationError" }
+put
+tags
+0	"Gestion des Traces"
+summary	"Mettre à jour une trace"
+operationId	"update_trace_traces__trail_id__put"
+parameters
+0
+name	"trail_id"
+in	"path"
+required	true
+schema
+type	"integer"
+title	"Trail Id"
+requestBody
+required	true
+content
+application/json
+schema
+$ref	"#/components/schemas/TrailSchema"
+responses
+200
+description	"Successful Response"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/TrailSchema" }
+404
+description	"Trace non trouvée"
+422
+description	"Validation Error"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/HTTPValidationError" }
+delete
+tags
+0	"Gestion des Traces"
+summary	"Supprimer une trace"
+operationId	"delete_trace_traces__trail_id__delete"
+security
+0
+APIKeyHeader	[]
+parameters
+0
+name	"trail_id"
+in	"path"
+required	true
+schema
+type	"integer"
+title	"Trail Id"
+responses
+204
+description	"Successful Response"
+404
+description	"Trace non trouvée"
+422
+description	"Validation Error"
+content
+application/json
+schema	{ "$ref": "#/components/schemas/HTTPValidationError" }
+components
+schemas
+HTTPValidationError
+properties
+detail
+items
+$ref	"#/components/schemas/ValidationError"
+type	"array"
+title	"Detail"
+type	"object"
+title	"HTTPValidationError"
+TrailSchema
+properties
+id
+anyOf
+0
+type	"integer"
+1
+type	"null"
+title	"Id"
+example	1
+name
+type	"string"
+title	"Name"
+example	"Ma Trace de Randonnée"
+gpx_content
+anyOf
+0
+type	"string"
+1
+type	"null"
+title	"Gpx Content"
+example	"<gpx>...</gpx>"
+length
+anyOf
+0
+type	"number"
+minimum	0.0JS:0
+1
+type	"null"
+title	"Length"
+example	10.5
+elevation_gain
+anyOf
+0
+type	"number"
+minimum	0.0JS:0
+1
+type	"null"
+title	"Elevation Gain"
+example	500.0JS:500
+elevation_loss
+anyOf
+0
+type	"number"
+minimum	0.0JS:0
+1
+type	"null"
+title	"Elevation Loss"
+example	500.0JS:500
+start_latitude
+anyOf
+0
+type	"number"
+1
+type	"null"
+title	"Start Latitude"
+example	45.12345
+start_longitude
+anyOf
+0
+type	"number"
+1
+type	"null"
+title	"Start Longitude"
+example	5.12345
+altitude_max
+anyOf
+0
+type	"number"
+1
+type	"null"
+title	"Altitude Max"
+example	2000.0JS:2000
+altitude_min
+anyOf
+0
+type	"number"
+1
+type	"null"
+title	"Altitude Min"
+example	1000.0JS:1000
+type	"object"
+required
+0	"name"
+title	"TrailSchema"
+ValidationError
+properties
+loc
+items
+anyOf
+0	{ type: "string" }
+1	{ type: "integer" }
+type	"array"
+title	"Location"
+msg
+type	"string"
+title	"Message"
+type
+type	"string"
+title	"Error Type"
+input
+title	"Input"
+ctx
+type	"object"
+title	"Context"
+type	"object"
+required
+0	"loc"
+1	"msg"
+2	"type"
+title	"ValidationError"
+securitySchemes
+APIKeyHeader
+type	"apiKey"
+in	"header"
+name	"X-API-Key"
