@@ -6,7 +6,8 @@ from gpxpy.gpx import GPXTrackPoint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models import Trail, TrailSchema, TrailPoint
+from app.db_models import Trail, TrailPoint
+from app.api_schemas import TrailSchema
 
 logger = logging.getLogger(__name__)
 

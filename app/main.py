@@ -5,12 +5,15 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.controller import router
-from app.database import engine, Base, SessionLocal
-from app.models import TrailSchema, Trail, TrailPoint
-from app.services import TrailService
+from app.routes import router
+from app.db_connection import engine, Base, SessionLocal
+from app.api_schemas import TrailSchema
+from app.db_models import Trail, TrailPoint
+from app.trail_service import TrailService
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -89,15 +92,25 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Arrêt de l'application.")
 
-
 app = FastAPI(
     title="Trails API",
     description="API de recherche de traces de trail à partir de fichiers GPX",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    servers=[
+        {"url": "https://api-gpx-l3miashs-2026.onrender.com", "description": "Serveur Render (Production)"},
+        {"url": "http://127.0.0.1:8000", "description": "Serveur Local (Développement)"}
+    ]
 )
 
-
+# Configuration du CORS pour autoriser GitHub Pages à interroger l'API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # L'étoile autorise tous les sites web à communiquer avec ton API
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(router)
 
 if __name__ == '__main__':

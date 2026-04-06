@@ -5,9 +5,9 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 # --- Imports locaux ---
-from app.database import SessionLocal
-from app.models import TrailSchema
-from app.services import TrailService
+from app.db_connection import SessionLocal
+from app.api_schemas import TrailSchema
+from app.trail_service import TrailService
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
 router = APIRouter()
@@ -43,11 +43,10 @@ async def api_root(service: Annotated[TrailService, Depends(get_service)]):
         "author": "L3 MIASHS 2026",
         "traces_en_base": nombre_de_traces,
         "Routes": {
-            "documentation": "/docs",
             "toutes_les_traces": "/traces",
             "recherche_par_id": "/traces/{id}"
-        },
-        "description": "Utilisez /docs pour tester interactivement les points d'accès."
+        }
+
     }
 
 
