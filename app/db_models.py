@@ -9,7 +9,6 @@ class Trail(Base):
     __table_args__ = (
         UniqueConstraint("name", name="uq_trail_name"),
     )
-
     id = Column(Integer, primary_key=True)
     name = Column(String, index=True, nullable=False)
 
@@ -23,8 +22,6 @@ class Trail(Base):
     altitude_min = Column(Float, nullable=True)
 
     points = relationship("TrailPoint", back_populates="trail", cascade="all, delete-orphan")
-
-
 class TrailPoint(Base):
     __tablename__ = "trail_points"
 
@@ -39,5 +36,4 @@ class TrailPoint(Base):
     longitude = Column(Float, nullable=False)
     altitude = Column(Float, nullable=True)
     order = Column(Integer, nullable=False)
-
     trail = relationship("Trail", back_populates="points")

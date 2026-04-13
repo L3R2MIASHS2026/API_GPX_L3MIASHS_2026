@@ -8,7 +8,7 @@ from fastapi.security import APIKeyHeader
 
 # --- Imports locaux ---
 from app.db_connection import SessionLocal
-from app.api_schemas import TrailSchema
+from app.api_schemas import TrailSchema, TrailDetailSchema
 from app.trail_service import TrailService
 
 # On enlève le tag global ici pour pouvoir les définir précisément sur chaque route
@@ -83,12 +83,9 @@ def get_traces(
         max_dist: Annotated[float, Query(description="Distance max (km)")] = float('inf'),
 ):
     return service.get_trails_by_distance(min_dist, max_dist)
-
-
-
 @router.get(
     "/traces/{trail_id}",
-    response_model=TrailSchema,
+    response_model= TrailDetailSchema,
     summary="Obtenir une trace",
     tags=["Gestion des Traces"],
     responses={404: {"description": ERROR_TRAIL_NOT_FOUND}},
@@ -115,8 +112,6 @@ def create_trace(
         service: Annotated[TrailService, Depends(get_service)],
 ):
     return service.create_trail(trail)
-
-
 @router.put(
     "/traces/{trail_id}",
     response_model=TrailSchema,
@@ -132,8 +127,6 @@ def update_trace(
     if not (updated_trail := service.update_trail(trail_id, trail)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
     return updated_trail
-
-
 @router.delete(
     "/traces/{trail_id}",
     status_code=status.HTTP_204_NO_CONTENT,

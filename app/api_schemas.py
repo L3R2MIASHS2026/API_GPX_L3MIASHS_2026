@@ -15,7 +15,6 @@ class TrailPointSchema(BaseModel):
         "from_attributes": True,
     }
 
-
 class TrailSchema(BaseModel):
     id: Optional[int] = Field(None, example=1)
     name: str = Field(..., example="Ma Trace de Randonnée")
@@ -28,6 +27,11 @@ class TrailSchema(BaseModel):
     start_longitude: Optional[float] = Field(None, example=5.12345)
     altitude_max: Optional[float] = Field(None, example=2000.0)
     altitude_min: Optional[float] = Field(None, example=1000.0)
+
+class TrailDetailSchema(TrailSchema):
+        # On force l'API à inclure la liste des points !
+    points: List[TrailPointSchema] = []
+
 
     #points: List[TrailPointSchema] = []
 
