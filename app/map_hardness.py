@@ -1,7 +1,5 @@
 import folium
 import requests as rq
-from services import GPXParser
-from fastapi.responses import HTMLResponse
 from geopy.distance import geodesic 
 import webbrowser
 import os
@@ -9,16 +7,16 @@ import os
 
 
 
-def generate_trail_map(trail: Trail) -> str:
+def generate_trail_map(trail) -> str:
     """
     Génère le code HTML d'une carte Folium à partir d'un objet Trail.
     """
     # 1. Sécurité : on vérifie si la trace a des points
-    if not trail.points or len(trail.points) == 0:
+    if not trail.points or len(trail["points"]) == 0:
         return "<p style='color:red; font-family:sans-serif;'>Aucun point GPS disponible pour cette trace.</p>"
 
     # 2. Trier les points par leur champ 'order' pour éviter les zigzags
-    sorted_points = sorted(trail.points, key=lambda p: p.order)
+    sorted_points = sorted(trail["points"], key=lambda p: p.order)
 
     # 3. Créer la liste de coordonnées [(lat1, lon1), (lat2, lon2), ...]
     coordinates = [(pt.latitude, pt.longitude) for pt in sorted_points]
@@ -37,7 +35,7 @@ def generate_trail_map(trail: Trail) -> str:
         color="#3388ff",  # Bleu vif
         weight=5,
         opacity=0.8,
-        tooltip=f"Parcours : {trail.name}"
+        tooltip=f"Parcours : {trail["name"]}"
     ).add_to(m)
 
     # 6. Ajouter les marqueurs de début et de fin
@@ -61,8 +59,13 @@ def generate_trail_map(trail: Trail) -> str:
 
 
 
-def get_trail_points(trail, step=1):
-    liste_lonlat = [[pts["latitude"], pts["longitude"]] for pts in trail["points"]]
+def get_trail_points(trail, step=1, online  = True):
+    if online :
+
+        requete_pts = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces/{trail["id"]}').json()
+    else:
+        requete_pts = rq.get(f'http://127.0.0.1:8000/docs/traces/{trail["id"]}').json()
+    liste_lonlat = [[pts["latitude"], pts["longitude"]] for pts in requete_pts["points"]]
     if step > 1:
         return liste_lonlat[::step]
     else:
@@ -70,8 +73,8 @@ def get_trail_points(trail, step=1):
 
 
 
-def map_traces_by_distance(min_dist:int = 0 ,max_dist:int = 150):
-    liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist={min_dist}&max_dist={max_dist}')
+def map_traces_by_distance(min_dist:int = 0 ,max_dist:int = 100):
+    liste_trail = rq.get(f'https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist={min_dist}&max_dist={max_dist}').json()
     map_traces(liste_trail)
 
 
@@ -86,7 +89,7 @@ def map_traces(liste_trail):
 
             folium.PolyLine(
                 liste_lonlat,
-                tooltip=trail.name,
+                tooltip=trail["name"],
                 color="blue",
                 weight=3,
             ).add_to(m)
@@ -103,9 +106,9 @@ def map_traces(liste_trail):
 def map_by_hardness(easy = True, medium = True, hard = True, online  = True):
 
     if online:
-        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces?min_dist=0&max_dist=150')
+        all_trail = rq.get('https://api-gpx-l3miashs-2026.onrender.com/traces').json()
     else:
-        all_trail = rq.get('http://127.0.0.1:8000/docs/traces?min_dist=0&max_dist=150')    
+        all_trail = rq.get('http://127.0.0.1:8000/docs/traces').json()   
     
     easy_trails, medium_trails,hard_trails = sort_trail_by_hardness(all_trail)
 
@@ -139,7 +142,7 @@ def lines_for_map(liste, carte,all_points, col="blue"):
 
             folium.PolyLine(
                 liste_lonlat,
-                tooltip=trail.name,
+                tooltip=trail["name"],
                 color=col,
                 weight=3,
             ).add_to(carte)
@@ -155,9 +158,9 @@ def sort_trail_by_hardness(liste_trail):
     medium_trails = []
     hard_trails = []
     for trail in liste_trail:
-        if (trail.elevation_gain >= 500 and trail.length >=5000) or trail.length>=25000:
+        if (trail["elevation_gain"] >= 1500 and trail["length"] >=5) or trail["length"]>=40:
             hard_trails.append(trail)
-        elif (trail.elevation_gain >=200 and trail.length >=5000) or trail.length>=15000:
+        elif (trail["elevation_gain"] >=750 and trail["length"] >=5) or trail["length"]>=20:
             medium_trails.append(trail)
         else:
             easy_trails.append(trail)
@@ -168,11 +171,6 @@ def sort_trail_by_hardness(liste_trail):
 
 
 
-
-
-
-
-    
 
 
 
