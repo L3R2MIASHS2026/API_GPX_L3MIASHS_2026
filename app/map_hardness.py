@@ -158,9 +158,9 @@ def sort_trail_by_hardness(liste_trail):
     medium_trails = []
     hard_trails = []
     for trail in liste_trail:
-        if (trail["elevation_gain"] >= 1500 and trail["length"] >=5) or trail["length"]>=40:
+        if (trail["elevation_gain"] >= 2000 and trail["length"] >=25) or trail["length"]>=120:
             hard_trails.append(trail)
-        elif (trail["elevation_gain"] >=750 and trail["length"] >=5) or trail["length"]>=20:
+        elif (trail["elevation_gain"] >=1000 and trail["length"] >=15) or trail["length"]>=40:
             medium_trails.append(trail)
         else:
             easy_trails.append(trail)
