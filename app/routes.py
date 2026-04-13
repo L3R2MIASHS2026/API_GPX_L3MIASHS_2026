@@ -110,6 +110,7 @@ def get_trace(
 def create_trace(
         trail: TrailSchema,
         service: Annotated[TrailService, Depends(get_service)],
+        cle: Annotated[str, Depends(verifier_cle_api)]
 ):
     return service.create_trail(trail)
 @router.put(
@@ -123,6 +124,7 @@ def update_trace(
         trail_id: int,
         trail: TrailSchema,
         service: Annotated[TrailService, Depends(get_service)],
+        cle: Annotated[str, Depends(verifier_cle_api)]
 ):
     if not (updated_trail := service.update_trail(trail_id, trail)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_TRAIL_NOT_FOUND)
